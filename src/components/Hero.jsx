@@ -245,8 +245,25 @@ const Hero = () => {
         gl.uniform1f(uniforms.u_seed, shaderParams.seed);
         gl.uniform3f(uniforms.u_color, shaderParams.color[0], shaderParams.color[1], shaderParams.color[2]);
 
+        // --- Visibility Check (Optimization) ---
+        let isVisible = true;
+        const observer = new IntersectionObserver(([entry]) => {
+            isVisible = entry.isIntersecting;
+            if (isVisible && !animationFrameId) {
+                render(); // Restart loop if visible and not running
+            }
+        }, { threshold: 0 });
+
+        // Observe the canvas or the section
+        observer.observe(canvas);
+
         // --- Render Loop ---
         const render = () => {
+            if (!isVisible) {
+                animationFrameId = null;
+                return; // Stop the loop
+            }
+
             const currentTime = performance.now();
             gl.uniform1f(uniforms.u_time, currentTime);
             gl.uniform1f(uniforms.u_scroll_progr, paramsRef.current.scrollProgress);
@@ -293,6 +310,7 @@ const Hero = () => {
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationFrameId);
             ctx.revert();
+            observer.disconnect();
             // Optional: WebGL cleanup if needed (delete buffers/programs)
         };
     }, []);

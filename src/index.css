@@ -9,7 +9,7 @@
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: 20px;
-  --font-heading: 'SF Pro Display', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Oswald', sans-serif;
   --font-body: 'SF Pro Text', 'Inter', sans-serif;
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -155,4 +155,152 @@ a {
   width: 100%;
   position: relative;
   overflow-x: hidden;
+}
+
+/* Uiverse Button (Df12345677) */
+.button {
+  height: 50px;
+  width: 160px;
+  background-color: #132233;
+  border: 2px solid rgb(182, 128, 128);
+  color: #eee;
+  transition: .6s;
+  font-size: 15px;
+  border-radius: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.button span {
+  transform: translateX(10px);
+  transition: .5s;
+  z-index: 2;
+}
+
+.button svg {
+  transform: translateX(-300px);
+  transition: .6s;
+  z-index: 3;
+  height: 20px;
+  position: absolute;
+}
+
+.button:hover {
+  width: 50px;
+  background-color: rgba(51, 34, 51, 0.815);
+  box-shadow: 20px 20px 96px #bebebe, -20px -20px 96px #ffffff;
+}
+
+.button:hover svg {
+  transform: translateX(0);
+}
+
+.button:hover span {
+  transform: translateY(70px);
+  font-size: .1rem;
+}
+
+/* Uiverse Like Button (LilaRest) */
+.like-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 22px 20px 22px;
+  box-shadow: rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+  background-color: #e8e8e8;
+  border-color: #ffe2e2;
+  border-style: solid;
+  border-width: 9px;
+  border-radius: 35px;
+  transition: transform 400ms cubic-bezier(.68, -0.55, .27, 2.5),
+    border-color 400ms ease-in-out,
+    background-color 400ms ease-in-out;
+  word-spacing: -2px;
+  cursor: pointer;
+}
+
+@keyframes movingBorders {
+  0% {
+    border-color: #fce4e4;
+  }
+
+  50% {
+    border-color: #ffd8d8;
+  }
+
+  90% {
+    border-color: #fce4e4;
+  }
+}
+
+.like-button:hover {
+  background-color: #eee;
+  transform: scale(105%);
+  animation: movingBorders 3s infinite;
+}
+
+.like-button .filled,
+.like-button .empty {
+  fill: rgb(255, 110, 110);
+  transition: opacity 100ms ease-in-out;
+}
+
+.like-button .filled {
+  position: absolute;
+  opacity: 0;
+}
+
+@keyframes beatingHeart {
+  0% {
+    transform: scale(1);
+  }
+
+  15% {
+    transform: scale(1.15);
+  }
+
+  30% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.15);
+  }
+
+  60% {
+    transform: scale(1);
+  }
+}
+
+.like-button:hover .empty {
+  opacity: 0;
+}
+
+.like-button:hover .filled {
+  opacity: 1;
+  animation: beatingHeart 1.2s infinite;
+}
+
+/* Liked State (Active) */
+.like-button.liked {
+  background-color: #eee;
+  border-color: #ffd8d8;
+}
+
+.like-button.liked .empty {
+  opacity: 0;
+}
+
+.like-button.liked .filled {
+  opacity: 1;
+  animation: none;
+  transform: translateY(-50%) scale(1.15);
+}
+
+.like-button.liked .filled path {
+  fill: rgb(255, 110, 110) !important;
 }
