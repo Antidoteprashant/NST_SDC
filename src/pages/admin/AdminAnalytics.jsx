@@ -2,39 +2,57 @@ import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
 
 const AdminAnalytics = () => {
-    const { getStats } = useAdmin();
+    const { getStats, orders } = useAdmin();
     const stats = getStats();
 
-    // Mock data for charts visualization (could be implemented with Recharts later)
-    const monthlyData = [400, 300, 600, 800, 500, 900, 1200];
+    // Calculate Dynamic Metrics
+    const avgOrderValue = stats.totalOrders > 0
+        ? (stats.totalRevenue / stats.totalOrders).toFixed(2)
+        : "0.00";
+
+    // Chart Data (Mocking monthly orders distribution for now based on current year)
+    const currentYear = new Date().getFullYear();
+    const monthlyData = new Array(12).fill(0);
+
+    orders.forEach(order => {
+        const d = new Date(order.created_at);
+        if (d.getFullYear() === currentYear) {
+            monthlyData[d.getMonth()] += parseFloat(order.total_amount) || 0;
+        }
+    });
+
+    // Get max value for chart scaling
+    const maxVal = Math.max(...monthlyData, 100); // minimal scale 100
 
     return (
         <div>
             <h1 style={{ fontSize: '2.5rem', marginBottom: '30px', textTransform: 'uppercase' }}>Analytics</h1>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                {/* Revenue Chart Placeholder */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+                {/* Revenue Chart */}
                 <div className="glass-panel" style={{ padding: '30px', borderRadius: '15px' }}>
-                    <h3 style={{ marginBottom: '20px', color: 'var(--text-muted)' }}>Revenue Overview</h3>
+                    <h3 style={{ marginBottom: '20px', color: 'var(--text-muted)' }}>Revenue Overview ({currentYear})</h3>
                     <div style={{
                         height: '300px',
                         display: 'flex',
                         alignItems: 'flex-end',
                         justifyContent: 'space-between',
-                        gap: '10px'
+                        gap: '5px'
                     }}>
                         {monthlyData.map((val, i) => (
                             <div key={i} style={{
                                 flex: 1,
-                                height: `${(val / 1200) * 100}%`,
+                                height: `${(val / maxVal) * 100}%`,
                                 background: 'linear-gradient(to top, var(--accent-primary), transparent)',
                                 borderRadius: '5px 5px 0 0',
-                                opacity: 0.8
-                            }}></div>
+                                opacity: 0.8,
+                                position: 'relative',
+                                minHeight: '2px' // Show line even if 0
+                            }} title={`$${val}`}></div>
                         ))}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', color: 'var(--text-muted)' }}>
-                        <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                        <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
                     </div>
                 </div>
 
@@ -44,19 +62,19 @@ const AdminAnalytics = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                             <span>Conversion Rate</span>
-                            <span style={{ color: '#00ff64', fontWeight: 'bold' }}>3.2%</span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>N/A (Not Tracked)</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                             <span>Avg. Order Value</span>
-                            <span style={{ color: '#fff', fontWeight: 'bold' }}>$116.25</span>
+                            <span style={{ color: '#fff', fontWeight: 'bold' }}>${avgOrderValue}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                             <span>Total Visitors</span>
-                            <span style={{ color: '#fff', fontWeight: 'bold' }}>12,450</span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>N/A (Not Tracked)</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Bounce Rate</span>
-                            <span style={{ color: '#ff4d4d', fontWeight: 'bold' }}>42%</span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>N/A</span>
                         </div>
                     </div>
                 </div>

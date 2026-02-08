@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { products as staticProducts, categories } from '../data/products'; // Keep static as fallback or lookup
+import { categories } from '../data/products'; // Keep categories for metadata
 import { useAdmin } from '../context/AdminContext';
 import { useCart } from '../context/CartContext';
 
@@ -15,7 +15,7 @@ const ProductPage = () => {
     // Merge DB and Static if needed, or just use DB + fallback to static
     // Actually, AdminContext likely has all products if seeded.
     // Let's combine them:
-    const allProducts = [...(dbProducts || []), ...staticProducts];
+    const allProducts = dbProducts || [];
 
     // Find product (handle both string/number IDs)
     const product = allProducts.find(p => String(p.id) === String(id));
