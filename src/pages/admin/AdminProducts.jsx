@@ -1,30 +1,51 @@
 import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
-
 import { useNavigate } from 'react-router-dom';
 import { categories } from '../../data/products';
+import { useCurrentTime } from '../../hooks/useCurrentTime';
 
 const AdminProducts = () => {
     const { products, deleteProduct } = useAdmin();
     const navigate = useNavigate();
+    const currentTime = useCurrentTime();
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h1 style={{ fontSize: '2.5rem', textTransform: 'uppercase' }}>Products</h1>
-                <button
-                    onClick={() => navigate('/admin/products/add')}
-                    // better: use navigate from hook
-                    style={{
-                        padding: '12px 25px',
-                        background: 'var(--accent-primary)',
-                        color: '#000',
-                        border: 'none',
-                        borderRadius: '5px',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                    }}>+ Add Product</button>
+            {/* Header with Title, Timestamp, and Actions */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '30px',
+                flexWrap: 'wrap',
+                gap: '20px'
+            }}>
+                <h1 style={{ fontSize: '2.5rem', margin: 0, textTransform: 'uppercase' }}>Products</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                    <div style={{
+                        color: 'var(--text-muted)',
+                        fontSize: '0.9rem',
+                        padding: '10px 20px',
+                        background: 'rgba(255,255,255,0.03)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        {currentTime}
+                    </div>
+                    <button
+                        onClick={() => navigate('/admin/products/add')}
+                        // better: use navigate from hook
+                        style={{
+                            padding: '12px 25px',
+                            background: 'var(--accent-primary)',
+                            color: '#000',
+                            border: 'none',
+                            borderRadius: '5px',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}>+ Add Product</button>
+                </div>
             </div>
 
             <div className="glass-panel" style={{ padding: '20px', borderRadius: '15px' }}>

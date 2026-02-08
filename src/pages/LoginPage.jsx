@@ -39,26 +39,44 @@ const LoginPage = () => {
 
         try {
             if (isSignUp) {
-                const { error } = await supabase.auth.signUp({
+                const { data, error } = await supabase.auth.signUp({
                     email: formData.email,
                     password: formData.password,
                 });
                 if (error) throw error;
-                alert('Sign up successful! Please check your email for verification.');
+
+                // Check if email confirmation is required
+                if (data?.user && !data.user.confirmed_at) {
+                    alert('Sign up successful! Please check your email for verification link.');
+                } else {
+                    alert('Sign up successful! You can now log in.');
+                }
+                setIsSignUp(false); // Switch to login mode
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabase.auth.signInWithPassword({
                     email: formData.email,
                     password: formData.password,
                 });
-                if (error) throw error;
+                if (error) {
+                    // Provide more helpful error messages
+                    if (error.message.includes('Invalid login credentials')) {
+                        throw new Error('Invalid email or password. Please check your credentials and try again.');
+                    } else if (error.message.includes('Email not confirmed')) {
+                        throw new Error('Please confirm your email before logging in. Check your inbox for the confirmation link.');
+                    } else {
+                        throw error;
+                    }
+                }
                 navigate(from, { replace: true });
             }
         } catch (error) {
-            alert(error.message);
+            console.error('Auth error:', error);
+            alert(error.message || 'An error occurred during authentication');
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleSocialLogin = async (provider) => {
         setLoading(true);

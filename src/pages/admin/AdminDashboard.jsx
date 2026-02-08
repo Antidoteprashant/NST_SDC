@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useCurrentTime } from '../../hooks/useCurrentTime';
 
 const StatCard = ({ title, value, icon, gradient, delay }) => (
     <div className="stat-card glass-panel" style={{
@@ -53,6 +54,7 @@ const StatCard = ({ title, value, icon, gradient, delay }) => (
 const AdminDashboard = () => {
     const { getStats, orders } = useAdmin();
     const stats = getStats();
+    const currentTime = useCurrentTime();
 
     // Add GSAP animation on mount
     React.useEffect(() => {
@@ -62,15 +64,35 @@ const AdminDashboard = () => {
 
     return (
         <div>
-            <h1 style={{
-                fontSize: '3rem',
+            {/* Header with Title and Live Timestamp */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 marginBottom: '40px',
-                textTransform: 'uppercase',
-                fontWeight: '900',
-                background: 'linear-gradient(to right, #fff, #888)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-            }}>Dashboard</h1>
+                flexWrap: 'wrap',
+                gap: '20px'
+            }}>
+                <h1 style={{
+                    fontSize: '3rem',
+                    margin: 0,
+                    textTransform: 'uppercase',
+                    fontWeight: '900',
+                    background: 'linear-gradient(to right, #fff, #888)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                }}>Dashboard</h1>
+                <div style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.9rem',
+                    padding: '10px 20px',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    {currentTime}
+                </div>
+            </div>
 
             {/* Stats Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '25px', marginBottom: '50px' }}>

@@ -1,8 +1,10 @@
 import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useCurrentTime } from '../../hooks/useCurrentTime';
 
 const AdminOrders = () => {
     const { orders, updateOrderStatus } = useAdmin();
+    const currentTime = useCurrentTime();
 
     const handleStatusChange = (id, newStatus) => {
         updateOrderStatus(id, newStatus);
@@ -10,7 +12,27 @@ const AdminOrders = () => {
 
     return (
         <div>
-            <h1 style={{ fontSize: '2.5rem', marginBottom: '30px', textTransform: 'uppercase' }}>Order Management</h1>
+            {/* Header with Title and Live Timestamp */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '30px',
+                flexWrap: 'wrap',
+                gap: '20px'
+            }}>
+                <h1 style={{ fontSize: '2.5rem', margin: 0, textTransform: 'uppercase' }}>Order Management</h1>
+                <div style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.9rem',
+                    padding: '10px 20px',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    {currentTime}
+                </div>
+            </div>
 
             <div className="glass-panel" style={{ padding: '20px', borderRadius: '15px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

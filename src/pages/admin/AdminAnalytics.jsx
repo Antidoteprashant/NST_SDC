@@ -1,9 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 
 const AdminAnalytics = () => {
     const { getStats, orders } = useAdmin();
     const stats = getStats();
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // Update timestamp every second
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Format timestamp like "Mon, 2 Feb, 06:19:35 pm"
+    const formatTimestamp = (date) => {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        const dayName = days[date.getDay()];
+        const day = date.getDate();
+        const month = months[date.getMonth()];
+        const hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+        const formattedHours = hours % 12 || 12;
+
+        return `${dayName}, ${day} ${month}, ${formattedHours}:${minutes}:${seconds} ${ampm}`;
+    };
 
     // Calculate Dynamic Metrics
     const avgOrderValue = stats.totalOrders > 0
@@ -26,7 +52,30 @@ const AdminAnalytics = () => {
 
     return (
         <div>
-            <h1 style={{ fontSize: '2.5rem', marginBottom: '30px', textTransform: 'uppercase' }}>Analytics</h1>
+            {/* Header with Title and Live Timestamp */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '30px',
+                flexWrap: 'wrap',
+                gap: '20px'
+            }}>
+                <div>
+                    <h1 style={{ fontSize: '2.5rem', marginBottom: '5px', textTransform: 'uppercase' }}>Analytics</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>Business insights and metrics</p>
+                </div>
+                <div style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.9rem',
+                    padding: '10px 20px',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    {formatTimestamp(currentTime)}
+                </div>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
                 {/* Revenue Chart */}
