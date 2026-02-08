@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { categories } from '../../data/products';
 
 const AdminAnalytics = () => {
     const { getStats, orders } = useAdmin();
@@ -31,24 +32,81 @@ const AdminAnalytics = () => {
         return `${dayName}, ${day} ${month}, ${formattedHours}:${minutes}:${seconds} ${ampm}`;
     };
 
-    // Calculate Dynamic Metrics
-    const avgOrderValue = stats.totalOrders > 0
-        ? (stats.totalRevenue / stats.totalOrders).toFixed(2)
-        : "0.00";
+    // --- Analytics Calculations ---
 
-    // Chart Data (Mocking monthly orders distribution for now based on current year)
     const currentYear = new Date().getFullYear();
-    const monthlyData = new Array(12).fill(0);
 
-    orders.forEach(order => {
-        const d = new Date(order.created_at);
-        if (d.getFullYear() === currentYear) {
-            monthlyData[d.getMonth()] += parseFloat(order.total_amount) || 0;
-        }
-    });
+    // 1. Monthly Revenue Data
+    const monthlyRevenueData = useMemo(() => {
+        const data = new Array(12).fill(0);
+        orders.forEach(order => {
+            const d = new Date(order.created_at);
+            if (d.getFullYear() === currentYear) {
+                data[d.getMonth()] += parseFloat(order.total_amount) || 0;
+            }
+        });
+        return data;
+    }, [orders, currentYear]);
 
-    // Get max value for chart scaling
-    const maxVal = Math.max(...monthlyData, 100); // minimal scale 100
+    const maxMonthlyRevenue = Math.max(...monthlyRevenueData, 100);
+
+    // 2. Sales by Category
+    const categorySales = useMemo(() => {
+        const sales = {};
+        // Initialize with 0 for known categories
+        categories.forEach(cat => {
+            sales[cat.id] = 0;
+        });
+
+        orders.forEach(order => {
+            if (order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    // Use categoryId if available, otherwise fallback or unknown
+                    const catId = item.categoryId || 'unknown';
+                    const itemTotal = (parseFloat(item.price) || 0) * (item.quantity || 1);
+
+                    if (sales[catId] !== undefined) {
+                        sales[catId] += itemTotal;
+                    } else {
+                        // accummulate unknown or other categories
+                        sales[catId] = (sales[catId] || 0) + itemTotal;
+                    }
+                });
+            }
+        });
+
+        // Convert to array for sorting/display
+        return Object.entries(sales)
+            .map(([id, total]) => ({
+                id,
+                name: categories.find(c => c.id === id)?.name || id,
+                total
+            }))
+            .sort((a, b) => b.total - a.total); // Sort by highest sales
+    }, [orders]);
+
+    const maxCategorySale = Math.max(...categorySales.map(c => c.total), 100);
+
+    // 3. Order Status Counts
+    const orderStatusCounts = useMemo(() => {
+        const counts = {
+            'Confirmed': 0, // Maps to 'Ordered'
+            'Processing': 0,
+            'Shipped': 0,
+            'Delivered': 0
+        };
+
+        orders.forEach(order => {
+            let status = order.status;
+            if (status === 'Ordered') status = 'Confirmed'; // Map Ordered to Confirmed for UI
+
+            if (counts[status] !== undefined) {
+                counts[status]++;
+            }
+        });
+        return counts;
+    }, [orders]);
+
 
     return (
         <div>
@@ -77,54 +135,98 @@ const AdminAnalytics = () => {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
-                {/* Revenue Chart */}
-                <div className="glass-panel" style={{ padding: '30px', borderRadius: '15px' }}>
-                    <h3 style={{ marginBottom: '20px', color: 'var(--text-muted)' }}>Revenue Overview ({currentYear})</h3>
-                    <div style={{
-                        height: '300px',
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        justifyContent: 'space-between',
-                        gap: '5px'
-                    }}>
-                        {monthlyData.map((val, i) => (
-                            <div key={i} style={{
-                                flex: 1,
-                                height: `${(val / maxVal) * 100}%`,
-                                background: 'linear-gradient(to top, var(--accent-primary), transparent)',
-                                borderRadius: '5px 5px 0 0',
-                                opacity: 0.8,
-                                position: 'relative',
-                                minHeight: '2px' // Show line even if 0
-                            }} title={`$${val}`}></div>
+            {/* Main Grid Layout */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '25px', marginBottom: '25px' }}>
+
+                {/* Sales by Category */}
+                <div className="glass-panel" style={{ padding: '25px', borderRadius: '15px' }}>
+                    <h3 style={{ marginBottom: '20px', color: '#fff', fontSize: '1.1rem' }}>Sales by Category</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {categorySales.slice(0, 5).map(cat => (
+                            <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.9rem' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>{cat.name}</span>
+                                        <span style={{ color: '#fff' }}>₹{cat.total.toLocaleString()}</span>
+                                    </div>
+                                    <div style={{
+                                        width: '100%',
+                                        height: '6px',
+                                        background: 'rgba(255,255,255,0.1)',
+                                        borderRadius: '3px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            width: `${(cat.total / maxCategorySale) * 100}%`,
+                                            height: '100%',
+                                            background: 'var(--accent-primary)',
+                                            borderRadius: '3px'
+                                        }}></div>
+                                    </div>
+                                </div>
+                            </div>
                         ))}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                        <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
+                        {categorySales.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No sales data available.</p>}
                     </div>
                 </div>
 
-                {/* Key Metrics */}
-                <div className="glass-panel" style={{ padding: '30px', borderRadius: '15px' }}>
-                    <h3 style={{ marginBottom: '20px', color: 'var(--text-muted)' }}>Performance Metrics</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                            <span>Conversion Rate</span>
-                            <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>N/A (Not Tracked)</span>
+                {/* Order Status */}
+                <div className="glass-panel" style={{ padding: '25px', borderRadius: '15px' }}>
+                    <h3 style={{ marginBottom: '25px', color: '#fff', fontSize: '1.1rem' }}>Order Status</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', height: '80%' }}>
+                        {Object.entries(orderStatusCounts).map(([status, count]) => (
+                            <div key={status} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>{status}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <span style={{
+                                        height: '20px',
+                                        width: '2px',
+                                        background: count > 0 ? '#fff' : 'rgba(255,255,255,0.2)'
+                                    }}></span>
+                                    <span style={{
+                                        color: '#fff',
+                                        fontWeight: 'bold',
+                                        fontSize: '1.1rem',
+                                        minWidth: '20px',
+                                        textAlign: 'right'
+                                    }}>{count}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Monthly Revenue - Full Width */}
+            <div className="glass-panel" style={{ padding: '30px', borderRadius: '15px' }}>
+                <h3 style={{ marginBottom: '10px', color: '#fff', fontSize: '1.1rem' }}>Monthly Revenue</h3>
+
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '0 0 auto' }}>
+                        <div style={{
+                            fontSize: '3.5rem',
+                            fontWeight: 'bold',
+                            color: 'var(--accent-primary)',
+                            lineHeight: 1.1,
+                            marginBottom: '5px'
+                        }}>
+                            ₹{stats.totalRevenue.toLocaleString()}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                            <span>Avg. Order Value</span>
-                            <span style={{ color: '#fff', fontWeight: 'bold' }}>${avgOrderValue}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                            <span>Total Visitors</span>
-                            <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>N/A (Not Tracked)</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Bounce Rate</span>
-                            <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>N/A</span>
-                        </div>
+                        <p style={{ color: 'var(--text-muted)', margin: 0 }}>Total Business Revenue</p>
+                    </div>
+
+                    <div style={{ flex: 1, height: '150px', display: 'flex', alignItems: 'flex-end', gap: '10px', minWidth: '300px' }}>
+                        {monthlyRevenueData.map((val, i) => (
+                            <div key={i} style={{
+                                flex: 1,
+                                height: `${(val / maxMonthlyRevenue) * 100}%`,
+                                background: 'linear-gradient(to top, rgba(255,255,255,0.1), transparent)',
+                                borderRadius: '4px 4px 0 0',
+                                position: 'relative',
+                                minHeight: '4px',
+                                borderTop: '2px solid var(--accent-primary)'
+                            }} title={`Method: ${val}`}></div>
+                        ))}
                     </div>
                 </div>
             </div>
